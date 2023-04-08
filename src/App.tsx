@@ -1,32 +1,40 @@
 import { invoke } from '@tauri-apps/api'
 import { useState } from 'react';
 
-export const App = () => {
-  const [inputName, setInputName] = useState('');
-  const [message, setMessage] = useState('');
+import { getAudioStream, startRecording, stopRecording } from './utils/audioInput';
 
-  const greet = (name: string) => {
-    invoke('greet', { name }).then((response) => {
-      if (typeof response !== 'string') throw new Error('Invalid response')
-      setMessage(response)
-    })
-  }
+export const App = () => {
+  const [inputText, setInputText] = useState("");
+  const [responseText, setResponseText] = useState("");
+
+  const handleAudioInput = async (): Promise<void> => {
+    const stream = await getAudioStream();
+    if (!stream) return;
+
+    startRecording(stream);
+
+    setTimeout(async() => {
+      const audioBlob = await stopRecording();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.play();
+    }, 5000);
+  };
 
   return (
-    <div>
-      <h1>Hello, React on Vite!</h1>
-      <form>
-        <label>Your name:</label>
-        <input type="text" value={inputName} onChange={(e) => setInputName(e.target.value)} />
-        <button type="submit" disabled={!inputName} onClick={(e) => {
-          e.preventDefault()
-          greet(inputName)
-        }}>Greet!</button>
-      </form>
-      {
-        message && (
-          <p>{`Rust: "${message}"`}</p>
-        )
-      }
-    </div>)
+    <div className="App">
+      <h1>ChatGPT音声アシスタント</h1>
+      <button onClick={handleAudioInput}>音声入力</button>
+      <div className="container">
+        <div className="inputText">
+          <h2>あなたの質問:</h2>
+          <p>{inputText}</p>
+        </div>
+        <div className="responseText">
+          <h2>ChatGPTの回答:</h2>
+          <p>{responseText}</p>
+        </div>
+      </div>
+    </div>
+  );
 }
