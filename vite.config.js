@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import reactRefresh from '@vitejs/plugin-react-refresh'
 
 export default defineConfig({
   // prevent vite from obscuring rust errors
@@ -19,4 +20,5 @@ export default defineConfig({
     // produce sourcemaps for debug builds
     sourcemap: !!process.env.TAURI_DEBUG,
   },
+  plugins: [reactRefresh()],
 })
