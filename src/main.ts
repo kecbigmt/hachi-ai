@@ -1,3 +1,5 @@
+import { invoke } from '@tauri-apps/api'
+
 import './style.css'
 import typescriptLogo from './typescript.svg'
 import viteLogo from '/vite.svg'
@@ -22,3 +24,5 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 `
 
 setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+
+invoke('greet', { name: 'World' }).then((response) => console.log(response));
