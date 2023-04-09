@@ -20,5 +20,7 @@ export default defineConfig({
     // produce sourcemaps for debug builds
     sourcemap: !!process.env.TAURI_DEBUG,
   },
-  plugins: [reactRefresh()],
+  plugins: [reactRefresh({
+    jsxImportSource: '@emotion/react',
+  })],
 })

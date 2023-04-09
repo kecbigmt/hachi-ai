@@ -20,6 +20,8 @@
     "vite": "^4.2.0"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.2.0"
+    "@emotion/react": "^11.10.6",
+    "@tauri-apps/api": "^1.2.0",
+    "openai": "^3.2.1"
   }
 }
