@@ -2,7 +2,9 @@
 
 https://tauri.app/v1/guides/getting-started/prerequisites
 
-## Builiding whisper-rs
+## Setup Rust to build whisper-rs
+
+### For Windows
 
 1. Setup MSYS2
   a. Download and install MSYS2 from https://www.msys2.org/
