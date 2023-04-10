@@ -4,19 +4,30 @@
 )]
 
 use whisper_rs::{WhisperContext, FullParams, SamplingStrategy};
-use std::sync::RwLock;
+use std::{sync::RwLock, env};
 use once_cell::sync::Lazy;
+use dotenvy::dotenv;
 
 static WHISPER_CTX: Lazy<RwLock<Option<WhisperContext>>> = Lazy::new(|| RwLock::new(None));
 
 fn main() {
+  // load environment variables from .env file
+  dotenv().expect(".env file not found");  
+
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
+      get_openai_api_key,
       load_model,
       transcribe_audio
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
+}
+
+#[tauri::command]
+fn get_openai_api_key() -> Result<String, String> {
+  let value = env::var("OPENAI_API_KEY").expect("failed to get env OPENAI_API_KEY");
+  Ok(value)
 }
 
 #[tauri::command]
