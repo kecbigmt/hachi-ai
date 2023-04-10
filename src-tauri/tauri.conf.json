@@ -7,7 +7,7 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "tauri-demo",
+    "productName": "hachi-ai",
     "version": "0.1.0"
   },
   "tauri": {
@@ -60,7 +60,7 @@
         "fullscreen": false,
         "height": 600,
         "resizable": true,
-        "title": "Tauri Demo",
+        "title": "Hachi AI",
         "width": 800
       }
     ]
