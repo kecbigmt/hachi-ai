@@ -76,8 +76,10 @@ export const App = () => {
       setMessages([...messages, newMessage]);
       setWaitingAssistant(false);
 
+      await invoke('speech_text', { text: newMessage.content });
+
       /*
-      const utterance = new SpeechSynthesisUtterance(newMessage);
+      const utterance = new SpeechSynthesisUtterance(newMessage.content);
       speechSynthesis.speak(utterance);
       */
     })();
