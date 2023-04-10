@@ -1,14 +1,44 @@
 import { invoke } from '@tauri-apps/api'
 import { open } from '@tauri-apps/api/dialog';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { getAudioStream, startRecording, stopRecording } from './utils/audioInput';
+import { Chat } from './components/Chat';
+import AudioRecorder from './components/AudioRecorder';
+import { openai } from './openai';
+
+type Message = {
+  role: 'user' | 'system' | 'assistant';
+  content: string;
+};
 
 export const App = () => {
-  const [inputText, setInputText] = useState("");
-  const [responseText, setResponseText] = useState("");
+  const [messages, setMessages] = useState<Message[]>([
+    { 
+      role: 'system',
+      content: `
+        あなたは音声アシスタントHachiです。
+        ユーザーの声をSpeech-To-Textで文字起こししたものを送るので、その場に適した応答をしてください。
+        Speech-To-Textの精度は完ぺきではないので、誤字や誤変換があります。文脈に応じて自然な解釈を行ってください。
+        
+        あなたの発言の形式は以下です。
+        \`\`\`
+        (あなたの発言)
+        \`\`\`
+        
+        例えば、
+        \`\`\`
+        こんにちは、私は音声アシスタントです。
+        \`\`\`
+        のように発言してください。
+        
+        ではまず、ユーザーに自己紹介をしてください。
+      `
+    }
+  ]);
   const [modelFilePath, setModelFilePath] = useState<string | undefined>(undefined);
   const [modelLoaded, setModelLoaded] = useState(false);
+  const [waitingUser, setWaitingUser] = useState(false);
+  const [waitingAssistant, setWaitingAssistant] = useState(false);
 
   const handleSelectFile = async () => {
     const filePath = await open();
@@ -23,26 +53,56 @@ export const App = () => {
     });
   };
 
-  const handleAudioInput = async (): Promise<void> => {
-    const stream = await getAudioStream();
-    if (!stream) return;
+  useEffect(() => {
+    if (messages.length === 0) return;
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: 'smooth',
+    });
+    
+    if (messages[messages.length - 1].role === 'assistant') return;
 
-    startRecording(stream);
-  };
+    setWaitingAssistant(true);
 
-  const handleAudioInputStop = async (): Promise<void> => {
-    const audioData = Array.from(await stopRecording());
+    (async () => {
+      const response = await openai.createChatCompletion({
+        model: "gpt-3.5-turbo",
+        messages,
+        temperature: 0,
+      });
 
-    invoke<string>('transcribe_audio', { audioData }).then((res) => {
-      console.log(`transcribe_audio: ${res}`);
-      setInputText(res);
+      const newMessage = response.data.choices[0]?.message;
+      if (!newMessage) return;
+      setMessages([...messages, newMessage]);
+      setWaitingAssistant(false);
+
+      /*
+      const utterance = new SpeechSynthesisUtterance(newMessage);
+      speechSynthesis.speak(utterance);
+      */
+    })();
+    
+  }, [messages]);
+
+  useEffect(() => {
+    
+  }, [messages]);
+
+  const onRecordingFinished = async (audioDataArray: Float32Array) => {
+    const audioData = Array.from(audioDataArray);
+
+    setWaitingUser(true);
+    invoke<string>('transcribe_audio', { audioData }).then((response) => {
+      const content = response.replaceAll(/\(.+\)/g, ''); // "(xxx)"のような括弧で囲まれた文字列を削除
+      setMessages([...messages, { role: 'user', content }]);
+      setWaitingUser(false);
     });
   };
 
   return (
     <div className="App">
-      <h1>ChatGPT音声アシスタント</h1>
-      <button onClick={handleSelectFile}>モデルファイルを選択</button>
+      <h1>GPT音声アシスタント</h1>
+      <button onClick={handleSelectFile}>Whisperモデルファイルを選択</button>
       {modelFilePath && (
         <>
           <p>ロード済み: {modelFilePath}</p>
@@ -51,22 +111,13 @@ export const App = () => {
       {
         modelLoaded && (
           <>
-            <button disabled={!modelFilePath} onClick={handleAudioInput}>音声入力</button>
-            <button disabled={!modelFilePath} onClick={handleAudioInputStop}>ストップ</button>
             <div className="container">
-              <div className="inputText">
-                <h2>あなたの質問:</h2>
-                <p>{inputText}</p>
-              </div>
-              <div className="responseText">
-                <h2>ChatGPTの回答:</h2>
-                <p>{responseText}</p>
-              </div>
+              <Chat messages={messages} waitingUser={waitingUser} waitingAssistant={waitingAssistant} />
             </div>
+            <AudioRecorder onRecordingFinished={onRecordingFinished} />
           </>
         )
       }
-
     </div>
   );
 }
