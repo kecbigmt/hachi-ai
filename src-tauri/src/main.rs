@@ -31,7 +31,7 @@ fn transcribe_audio(audio_data: Vec<f32>) -> Result<String, String> {
   let mut ctx_binding = WHISPER_CTX.write().unwrap();
   let ctx = ctx_binding.as_mut().unwrap();
 
-  let mut params = FullParams::new(SamplingStrategy::default());
+  let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 1 });
   params.set_language(Some("ja"));
 
 
