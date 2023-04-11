@@ -13,7 +13,7 @@ type Message = {
 
 export const App = () => {
   const [messages, setMessages] = useState<Message[]>([
-    { 
+    {
       role: 'system',
       content: `
         あなたは音声アシスタントHachiです。
@@ -59,7 +59,7 @@ export const App = () => {
       top: document.body.scrollHeight,
       behavior: 'smooth',
     });
-    
+
     if (messages[messages.length - 1].role === 'assistant') return;
 
     setWaitingAssistant(true);
@@ -83,11 +83,11 @@ export const App = () => {
       speechSynthesis.speak(utterance);
       */
     })();
-    
+
   }, [messages]);
 
   useEffect(() => {
-    
+
   }, [messages]);
 
   const onRecordingFinished = async (audioDataArray: Float32Array) => {
@@ -110,16 +110,10 @@ export const App = () => {
           <p>ロード済み: {modelFilePath}</p>
         </>
       )}
-      {
-        modelLoaded && (
-          <>
-            <div className="container">
-              <Chat messages={messages} waitingUser={waitingUser} waitingAssistant={waitingAssistant} />
-            </div>
-            <AudioRecorder onRecordingFinished={onRecordingFinished} />
-          </>
-        )
-      }
+      <div className="container">
+        <Chat messages={messages} waitingUser={waitingUser} waitingAssistant={waitingAssistant} />
+      </div>
+      {modelLoaded && <AudioRecorder onRecordingFinished={onRecordingFinished} />}
     </div>
   );
 }
