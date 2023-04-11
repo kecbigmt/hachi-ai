@@ -37,6 +37,8 @@ export const App = () => {
   ]);
   const [modelFilePath, setModelFilePath] = useState<string | undefined>(undefined);
   const [modelLoaded, setModelLoaded] = useState(false);
+  const [ttsDirectoryPath, setTTSDirectoryPath] = useState<string | undefined>(undefined);
+  const [ttsLoaded, setTTSLoaded] = useState(false);
   const [waitingUser, setWaitingUser] = useState(false);
   const [waitingAssistant, setWaitingAssistant] = useState(false);
 
@@ -50,6 +52,19 @@ export const App = () => {
     invoke('load_model', { modelFilePath }).then(() => {
       setModelLoaded(true);
       setModelFilePath(Array.isArray(filePath) ? filePath[0] : filePath);
+    });
+  };
+
+  const handleSelectTTSDirectory = async () => {
+    const directoryPath = await open({ directory: true });
+    if (!directoryPath) return;
+    if (Array.isArray(directoryPath) && directoryPath.length === 0) return;
+
+    const ttsDirectoryPath = Array.isArray(directoryPath) ? directoryPath[0] : directoryPath;
+
+    invoke('load_vvc', { ttsDirectoryPath }).then(() => {
+      setTTSLoaded(true);
+      setTTSDirectoryPath(ttsDirectoryPath);
     });
   };
 
@@ -75,6 +90,11 @@ export const App = () => {
       if (!newMessage) return;
       setMessages([...messages, newMessage]);
       setWaitingAssistant(false);
+
+      invoke<Uint8Array>('speech_text', { text: newMessage.content }).then((audioData) => {
+        const audio = new Audio(URL.createObjectURL(new Blob([audioData], { type: 'audio/wav' })));
+        audio.play();
+      });
 
       /*
       const utterance = new SpeechSynthesisUtterance(newMessage);
@@ -108,8 +128,15 @@ export const App = () => {
           <p>ロード済み: {modelFilePath}</p>
         </>
       )}
+      
+      <button onClick={handleSelectTTSDirectory}>Open JTalkフォルダを選択</button>
+      {ttsDirectoryPath && (
+        <>
+          <p>ロード済み: {ttsDirectoryPath}</p>
+        </>
+      )}
       {
-        modelLoaded && (
+        modelLoaded && ttsLoaded && (
           <>
             <div className="container">
               <Chat messages={messages} waitingUser={waitingUser} waitingAssistant={waitingAssistant} />

@@ -7,8 +7,10 @@ use whisper_rs::{WhisperContext, FullParams, SamplingStrategy};
 use std::{sync::RwLock, env};
 use once_cell::sync::Lazy;
 use dotenvy::dotenv;
+use vvcore::{VoicevoxCore, AccelerationMode};
 
 static WHISPER_CTX: Lazy<RwLock<Option<WhisperContext>>> = Lazy::new(|| RwLock::new(None));
+static VVC: Lazy<RwLock<Option<VoicevoxCore>>> = Lazy::new(|| RwLock::new(None));
 
 fn main() {
   // load environment variables from .env file
@@ -18,7 +20,9 @@ fn main() {
     .invoke_handler(tauri::generate_handler![
       get_openai_api_key,
       load_model,
-      transcribe_audio
+      load_vvc_model,
+      transcribe_audio,
+      speech_text
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
@@ -35,6 +39,15 @@ fn load_model(model_file_path: &str) -> Result<String, String> {
   let mut ctx = WHISPER_CTX.write().unwrap();
   *ctx = Some(WhisperContext::new(model_file_path).expect("failed to load model"));
   Ok("OK".to_string())
+}
+
+#[tauri::command]
+fn load_vvc_model(model_dir_path: &str) -> Result<(), String> {
+    let dir = std::ffi::CString::new(model_dir_path).unwrap();
+
+  let mut vvc = VVC.write().unwrap();
+  *vvc = Some(VoicevoxCore::new_from_options(AccelerationMode::Auto, 0, true, dir.as_c_str()).expect("failed to load model"));
+  Ok(())
 }
 
 #[tauri::command]
@@ -66,4 +79,14 @@ fn transcribe_audio(audio_data: Vec<f32>) -> Result<String, String> {
   }
 
   Ok(result)
+}
+
+#[tauri::command]
+fn speech_text(text: &str) -> Result<Vec<u8>, String> {
+  let vvc_binding = VVC.read().unwrap();
+  let vvc = vvc_binding.as_ref().unwrap();
+  
+  let speaker_id: u32 = 1;
+  let audio = vvc.tts_simple(text, speaker_id).expect("failed to run model");
+  Ok(audio.as_slice().to_vec())
 }
