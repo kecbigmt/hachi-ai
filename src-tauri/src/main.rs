@@ -48,6 +48,9 @@ fn main() {
             .unwrap();
         tts.set_voice(voice).expect("failed to set voice");
 
+        // 1.3倍速で話す
+        tts.set_rate(1.3).expect("failed to set rate");
+
         loop {
           if let Ok(text) = tts_event_receiver.try_recv() {
               tts.speak(text, true).expect("failed to speak");
