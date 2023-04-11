@@ -5,7 +5,6 @@
 
 use dotenvy::dotenv;
 use once_cell::sync::Lazy;
-use std::io;
 use std::sync::Arc;
 use std::{env, sync::RwLock};
 use tokio::{runtime::Runtime, sync::mpsc::UnboundedSender};
