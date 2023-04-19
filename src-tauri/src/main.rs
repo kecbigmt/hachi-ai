@@ -8,6 +8,7 @@ use std::{sync::RwLock, env};
 use once_cell::sync::Lazy;
 use dotenvy::dotenv;
 use vvcore::{VoicevoxCore, AccelerationMode};
+use std::path::Path;
 
 static WHISPER_CTX: Lazy<RwLock<Option<WhisperContext>>> = Lazy::new(|| RwLock::new(None));
 static VVC: Lazy<RwLock<Option<VoicevoxCore>>> = Lazy::new(|| RwLock::new(None));
@@ -82,11 +83,27 @@ fn transcribe_audio(audio_data: Vec<f32>) -> Result<String, String> {
 }
 
 #[tauri::command]
-fn speech_text(text: &str) -> Result<Vec<u8>, String> {
-  let vvc_binding = VVC.read().unwrap();
-  let vvc = vvc_binding.as_ref().unwrap();
+fn speech_text(text: &str) -> Result<Vec<f32>, String> {
+  let path = Path::new("D:/Users/kecy/dev/src/github.com/kecbigmt/tauri-demo/src-tauri/target/debug/open_jtalk_dic_utf_8-1.11");
+  let dir = std::ffi::CString::new(path.to_str().unwrap()).unwrap();
+  let vvc = VoicevoxCore::new_from_options(AccelerationMode::Auto, 0, true, dir.as_c_str()).unwrap();
   
   let speaker_id: u32 = 1;
   let audio = vvc.tts_simple(text, speaker_id).expect("failed to run model");
-  Ok(audio.as_slice().to_vec())
+
+  let f32_data: Vec<f32> = convert_wav_to_f32(&audio.as_slice());
+
+  Ok(f32_data)
+}
+
+fn convert_wav_to_f32(wav_data: &[u8]) -> Vec<f32> {
+  let mut f32_data = Vec::new();
+
+  for i in (0..wav_data.len()).step_by(2) {
+      let sample = i16::from_le_bytes([wav_data[i], wav_data[i + 1]]);
+      let f32_sample = sample as f32 / i16::MAX as f32;
+      f32_data.push(f32_sample);
+  }
+
+  f32_data
 }
