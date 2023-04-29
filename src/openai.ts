@@ -9,3 +9,5 @@ const configuration = new Configuration({
 });
 
 export const openai = new OpenAIApi(configuration);
+
+export const openAIChatModelName = await invoke<string>('get_openai_chat_model_name', {});

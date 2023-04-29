@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { Chat } from './components/Chat';
 import AudioRecorder from './components/AudioRecorder';
-import { openai } from './openai';
+import { openai, openAIChatModelName } from './openai';
 
 type Message = {
   role: 'user' | 'system' | 'assistant';
@@ -66,7 +66,7 @@ export const App = () => {
 
     (async () => {
       const response = await openai.createChatCompletion({
-        model: "gpt-3.5-turbo",
+        model: openAIChatModelName,
         messages,
         temperature: 0,
       });
@@ -75,6 +75,21 @@ export const App = () => {
       if (!newMessage) return;
       setMessages([...messages, newMessage]);
       setWaitingAssistant(false);
+
+      invoke<number[]>('speech_text', { text: newMessage.content }).then(async (audioData) => {
+        const audioArray = new Float32Array(audioData);
+        
+        const ctx = new AudioContext();
+        const audioBuffer = ctx.createBuffer(1, audioArray.length, 24000);
+        audioBuffer.getChannelData(0).set(audioArray);
+        
+        const source = ctx.createBufferSource();
+
+        source.buffer = audioBuffer;
+        source.connect(ctx.destination); 
+
+        source.start();
+      });
 
       /*
       const utterance = new SpeechSynthesisUtterance(newMessage);
