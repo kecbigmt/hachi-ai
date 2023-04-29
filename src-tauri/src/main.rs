@@ -50,8 +50,9 @@ fn main() {
 
     // create a tokio runtime
     let rt = Arc::new(Runtime::new().unwrap());
+    let open_jtalk_dict_dir_string = env::var("OPEN_JTALK_DICT_DIR").expect("failed to get env OPEN_JTALK_DIC_DIR");
     rt.spawn(async move {
-      let path = Path::new("D:/Users/kecy/dev/src/github.com/kecbigmt/tauri-demo/src-tauri/target/debug/open_jtalk_dic_utf_8-1.11");
+      let path = Path::new(open_jtalk_dict_dir_string.as_str());
       let dir = std::ffi::CString::new(path.to_str().unwrap()).unwrap();
       let vvc: VoicevoxCore = VoicevoxCore::new_from_options(AccelerationMode::Auto, 0, true, dir.as_c_str()).unwrap();
       let speaker_id: u32 = 1;
