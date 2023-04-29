@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { Chat } from './components/Chat';
 import AudioRecorder from './components/AudioRecorder';
-import { openai } from './openai';
+import { openai, openAIChatModelName } from './openai';
 
 type Message = {
   role: 'user' | 'system' | 'assistant';
@@ -66,7 +66,7 @@ export const App = () => {
 
     (async () => {
       const response = await openai.createChatCompletion({
-        model: "gpt-3.5-turbo",
+        model: openAIChatModelName,
         messages,
         temperature: 0,
       });

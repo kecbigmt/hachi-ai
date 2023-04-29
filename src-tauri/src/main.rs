@@ -71,6 +71,7 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             get_openai_api_key,
+            get_openai_chat_model_name,
             load_model,
             transcribe_audio,
             speech_text
@@ -83,6 +84,13 @@ fn main() {
 #[tauri::command]
 fn get_openai_api_key(_state: tauri::State<AppState>) -> Result<String, String> {
     let value = env::var("OPENAI_API_KEY").expect("failed to get env OPENAI_API_KEY");
+    Ok(value)
+}
+
+#[tauri::command]
+fn get_openai_chat_model_name(_state: tauri::State<AppState>) -> Result<String, String> {
+    let value = env::var("OPENAI_CHAT_MODEL_NAME")
+        .expect("failed to get env OPENAI_CHAT_MODEL_NAME");
     Ok(value)
 }
 
